@@ -1,0 +1,73 @@
+<div class="page-heading">
+  <div><h1>Citas</h1><p>Consulta, agenda y gestiona las citas médicas.</p></div>
+  <button pButton type="button" (click)="open()">
+    <i pButtonIcon class="pi pi-plus" aria-hidden="true"></i><span pButtonLabel>Nueva cita</span>
+  </button>
+</div>
+
+<section class="panel table-panel">
+  <div class="filters">
+    <label>Fecha <input pInputText type="date" #dateInput [value]="date()"
+                       (change)="date.set(dateInput.value); first.set(0)"></label>
+    <div class="filter-field">
+      <label for="medico-filtro" id="medico-filtro-label">Médico</label>
+      <p-select inputId="medico-filtro" ariaLabelledBy="medico-filtro-label" [options]="doctorOptions()" [ngModel]="doctor()"
+                optionLabel="label" optionValue="id" placeholder="Todos los médicos" [showClear]="true"
+                [loading]="doctors().loading" (ngModelChange)="doctor.set($event); first.set(0)" />
+    </div>
+    <div class="filter-field">
+      <label for="estado-filtro" id="estado-filtro-label">Estado</label>
+      <p-select inputId="estado-filtro" ariaLabelledBy="estado-filtro-label" [options]="states" [ngModel]="state()"
+                placeholder="Todos los estados" [showClear]="true" (ngModelChange)="state.set($event); first.set(0)" />
+    </div>
+    @if (doctor() || date() || state()) {
+      <button pButton type="button" severity="secondary" [text]="true"
+              (click)="doctor.set(null); date.set(''); state.set(null); first.set(0)">Limpiar filtros</button>
+    }
+  </div>
+  @if (doctors().error) {
+    <app-feedback [error]="doctors().error" (retry)="doctorsRevision.update(increment)" />
+  }
+  <app-feedback [loading]="list().loading" [error]="list().error" (retry)="reload()">
+    <p-table [value]="filtered()" dataKey="id" [paginator]="filtered().length > 10"
+             [rows]="10" [first]="first()" (firstChange)="first.set($event)">
+      <ng-template #header>
+        <tr>
+          <th scope="col">Fecha y hora</th><th scope="col">Paciente</th><th scope="col">Médico</th>
+          <th scope="col">Motivo</th><th scope="col">Estado</th><th scope="col">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-cita>
+        <tr>
+          <td data-label="Fecha y hora"><span><strong>{{ cita.fechaHora | date:'dd/MM/yyyy' }}</strong><small>{{ cita.fechaHora | date:'HH:mm' }}</small></span></td>
+          <td class="mobile-record-name"><strong>{{ cita.paciente }}</strong></td>
+          <td data-label="Médico"><span>{{ cita.medico }}<small>{{ cita.especialidad }}</small></span></td>
+          <td class="table-motive" data-label="Motivo">{{ cita.motivo }}</td>
+          <td data-label="Estado"><span class="badge" [attr.data-state]="cita.estado">{{ cita.estado }}</span></td>
+          <td class="mobile-record-actions">
+            <div class="flex items-center">
+              <button pButton type="button" [text]="true" size="small" (click)="selected.set({ id: cita.id, cancel: false })">Ver</button>
+              @if (cita.estado === 'Programada') {
+                <button pButton type="button" severity="danger" [text]="true" size="small"
+                        (click)="selected.set({ id: cita.id, cancel: true })">Cancelar</button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr><td colspan="6" class="empty">
+          {{ doctor() || date() || state() ? 'No hay citas que coincidan con los filtros.' : 'Aún no hay citas registradas.' }}
+        </td></tr>
+      </ng-template>
+    </p-table>
+    <p class="table-count">{{ filtered().length }} {{ filtered().length === 1 ? 'cita' : 'citas' }}</p>
+  </app-feedback>
+</section>
+
+@if (defaults(); as values) {
+  <app-cita-form [defaults]="values" (closed)="defaults.set(null)" (changed)="reload()" />
+}
+@if (selected(); as item) {
+  <app-cita-detail [id]="item.id" [confirmOnOpen]="item.cancel" (closed)="selected.set(null)" (changed)="reload()" />
+}

@@ -1,0 +1,58 @@
+<div class="page-heading">
+  <div><h1>Agenda médica</h1><p>Visualiza las citas por médico y fecha.</p></div>
+  <button pButton type="button" (click)="open()">
+    <i pButtonIcon class="pi pi-plus" aria-hidden="true"></i><span pButtonLabel>Nueva cita</span>
+  </button>
+</div>
+
+<section class="panel calendar-panel" aria-label="Calendario de citas">
+  <div class="filters">
+    <div class="filter-field">
+      <label for="agenda-medico" id="agenda-medico-label">Médico</label>
+      <p-select inputId="agenda-medico" ariaLabelledBy="agenda-medico-label" [options]="doctorOptions()" [ngModel]="doctor()"
+                optionLabel="label" optionValue="id" placeholder="Todos los médicos" [showClear]="true"
+                [loading]="doctors().loading" (ngModelChange)="doctor.set($event)" />
+    </div>
+    <label>Ir a fecha <input pInputText type="date" #target [value]="anchor()" (change)="goTo(target.value)"></label>
+  </div>
+  @if (doctors().error) { <app-feedback [error]="doctors().error" (retry)="doctorsRevision.update(increment)" /> }
+  <div class="calendar-toolbar">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="segmented" aria-label="Navegación de fechas">
+        <button type="button" aria-label="Período anterior" (click)="move('prev')"><i class="pi pi-chevron-left" aria-hidden="true"></i></button>
+        <button type="button" (click)="move('today')">Hoy</button>
+        <button type="button" aria-label="Período siguiente" (click)="move('next')"><i class="pi pi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <h2 aria-live="polite">{{ title() }}</h2>
+    </div>
+    <div class="segmented" aria-label="Vista de agenda">
+      @for (item of views; track item.key) {
+        <button type="button" [attr.aria-pressed]="view() === item.key"
+                [class.active]="view() === item.key" (click)="changeView(item.key)">{{ item.label }}</button>
+      }
+    </div>
+  </div>
+  <app-feedback [loading]="list().loading" [error]="list().error" (retry)="revision.update(increment)" />
+  <div class="calendar-scroll" [class.calendar-wide]="view() !== 'timeGridDay'">
+    <full-calendar [options]="options" [events]="events()">
+      <ng-template #eventContent let-arg>
+        <span class="event-copy">
+          <strong>{{ arg.timeText }} {{ arg.event.title }}</strong>
+          <small>{{ arg.event.extendedProps.doctor }}</small>
+        </span>
+      </ng-template>
+    </full-calendar>
+  </div>
+  <div class="calendar-legend">
+    @for (state of states; track state) {
+      <span class="badge" [attr.data-state]="state">{{ state }}</span>
+    }
+  </div>
+</section>
+
+@if (defaults(); as values) {
+  <app-cita-form [defaults]="values" (closed)="defaults.set(null)" (changed)="revision.update(increment)" />
+}
+@if (selected(); as id) {
+  <app-cita-detail [id]="id" (closed)="selected.set(null)" (changed)="revision.update(increment)" />
+}

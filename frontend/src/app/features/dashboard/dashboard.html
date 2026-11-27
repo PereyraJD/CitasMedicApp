@@ -1,0 +1,65 @@
+<div class="page-heading">
+  <div><h1>Dashboard</h1><p>Resumen general del sistema.</p></div>
+  <time class="date-chip" [attr.datetime]="todayDate | date:'yyyy-MM-dd'">
+    <i class="pi pi-calendar" aria-hidden="true"></i>{{ todayDate | date:'d MMMM yyyy' }}
+  </time>
+</div>
+
+<app-feedback [loading]="overview().loading" [error]="overview().error" (retry)="retry()">
+  <section class="metrics" aria-label="Indicadores">
+    @for (metric of metrics(); track metric.label) {
+      <article class="metric" [attr.data-color]="metric.color">
+        <div class="metric-icon" aria-hidden="true"><i [class]="'pi ' + metric.icon"></i></div>
+        <div><h2>{{ metric.label }}</h2><strong>{{ metric.value }}</strong></div>
+      </article>
+    }
+  </section>
+  <div class="dashboard-grid">
+    <section class="panel">
+      <div class="panel-heading">
+        <h2>Citas de hoy</h2>
+        <a routerLink="/citas" [queryParams]="{ fecha: todayDate | date:'yyyy-MM-dd' }">
+          Ver todas <i class="pi pi-arrow-right" aria-hidden="true"></i>
+        </a>
+      </div>
+      @for (cita of today().slice(0, 6); track cita.id) {
+        <a class="appointment" routerLink="/citas" [queryParams]="{ id: cita.id }">
+          <time [attr.datetime]="cita.fechaHora">{{ cita.fechaHora | date:'HH:mm' }}</time>
+          <span class="appointment-name"><strong>{{ cita.paciente }}</strong><small>{{ cita.especialidad }}</small></span>
+          <span class="badge" [attr.data-state]="cita.estado">{{ cita.estado }}</span>
+        </a>
+      } @empty {
+        <div class="illustrated-empty"><i class="pi pi-calendar" aria-hidden="true"></i><p>No hay citas para hoy.</p></div>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading"><h2>Citas por estado</h2></div>
+      <div class="status-chart">
+        <p-chart type="doughnut" [data]="chart()" [options]="chartOptions" height="172px" aria-hidden="true" />
+        <div class="chart-total"><strong>{{ citas().length }}</strong><small>Total de citas</small></div>
+      </div>
+      <dl class="chart-legend">
+        @for (state of statuses(); track state.label) {
+          <div><dt><span [style.background]="state.color"></span>{{ state.label }}</dt><dd>{{ state.count }}</dd></div>
+        }
+      </dl>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <h2>Próximas citas</h2>
+      <a routerLink="/agenda">Ver agenda <i class="pi pi-arrow-right" aria-hidden="true"></i></a>
+    </div>
+    @for (cita of upcoming().slice(0, 5); track cita.id) {
+      <a class="appointment" routerLink="/citas" [queryParams]="{ id: cita.id }">
+        <time [attr.datetime]="cita.fechaHora">{{ cita.fechaHora | date:'dd/MM · HH:mm' }}</time>
+        <span class="appointment-name"><strong>{{ cita.paciente }}</strong><small>{{ cita.medico }}</small></span>
+        <span class="badge" [attr.data-state]="cita.estado">{{ cita.estado }}</span>
+      </a>
+    } @empty {
+      <div class="illustrated-empty"><i class="pi pi-clock" aria-hidden="true"></i><p>No hay próximas citas programadas.</p></div>
+    }
+  </section>
+</app-feedback>
