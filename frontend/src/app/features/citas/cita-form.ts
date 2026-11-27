@@ -34,12 +34,12 @@ export interface CitaDefaults {
               <div class="filter-field">
                 <label for="cita-paciente" id="cita-paciente-label">Paciente</label>
                 <p-select inputId="cita-paciente" ariaLabelledBy="cita-paciente-label" formControlName="pacienteId" [options]="patients()"
-                          optionLabel="label" optionValue="id" placeholder="Selecciona un paciente" [filter]="true" />
+                          optionLabel="label" optionValue="id" placeholder="Selecciona un paciente" appendTo="body" [filter]="true" filterPlaceholder="Buscar paciente" />
               </div>
               <div class="filter-field">
                 <label for="cita-medico" id="cita-medico-label">Médico</label>
                 <p-select inputId="cita-medico" ariaLabelledBy="cita-medico-label" formControlName="medicoId" [options]="doctors()"
-                          optionLabel="label" optionValue="id" placeholder="Selecciona un médico" [filter]="true" />
+                          optionLabel="label" optionValue="id" placeholder="Selecciona un médico" appendTo="body" [filter]="true" filterPlaceholder="Buscar médico" />
               </div>
               <label>Fecha <input pInputText type="date" formControlName="fecha" [min]="today" required></label>
               <label>Hora <input pInputText type="time" formControlName="hora" required></label>

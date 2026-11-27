@@ -10,9 +10,11 @@ function response(page: Page, method: string, path: RegExp, status: number) {
   );
 }
 
-async function choose(root: Page | Locator, field: string, value: string | RegExp) {
-  await root.getByRole('combobox', { name: field, exact: true }).click();
-  await root.getByRole('option', { name: value }).click();
+async function choose(page: Page, field: string, value: string | RegExp, scope: Page | Locator = page) {
+  const control = scope.getByRole('combobox', { name: field, exact: true });
+  await control.click();
+  await page.getByRole('option', { name: value }).click();
+  await expect(control).toContainText(value);
 }
 
 test('registra y consulta los directorios, agenda, filtra y cancela contra la API', async ({ page, request }) => {
@@ -85,8 +87,8 @@ test('registra y consulta los directorios, agenda, filtra y cancela contra la AP
   async function fillCita(hora: string, reason: string, patientName = 'Ana ' + persona, doctorName = 'Luis ' + persona) {
     await page.getByRole('button', { name: 'Nueva cita' }).click();
     const dialog = page.getByRole('dialog', { name: 'Nueva cita' });
-    await choose(dialog, 'Paciente', new RegExp(patientName));
-    await choose(dialog, 'Médico', new RegExp(doctorName));
+    await choose(page, 'Paciente', new RegExp(patientName), dialog);
+    await choose(page, 'Médico', new RegExp(doctorName), dialog);
     await dialog.getByLabel('Fecha', { exact: true }).fill(futuro);
     await dialog.getByLabel('Hora', { exact: true }).fill(hora);
     await dialog.getByLabel('Motivo').fill(reason);
