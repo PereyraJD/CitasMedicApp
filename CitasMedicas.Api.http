@@ -1,0 +1,59 @@
+@host = http://localhost:5258
+
+### Crear paciente
+POST {{host}}/api/pacientes
+Content-Type: application/json
+
+{
+  "nombre": "María",
+  "apellido": "López",
+  "telefono": "809-555-1234",
+  "cedula": "001-1234567-8",
+  "email": "maria@correo.com",
+  "fechaNacimiento": "1995-04-12"
+}
+
+### Crear médico
+POST {{host}}/api/medicos
+Content-Type: application/json
+
+{
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "telefono": "809-555-9876",
+  "especialidad": "Cardiología"
+}
+
+### Crear cita (10:00)
+POST {{host}}/api/citas
+Content-Type: application/json
+
+{
+  "pacienteId": 1,
+  "medicoId": 1,
+  "fechaHora": "2026-12-01T10:00:00",
+  "motivo": "Chequeo general"
+}
+
+### Cita que choca (10:15) -> debe dar 400
+POST {{host}}/api/citas
+Content-Type: application/json
+
+{
+  "pacienteId": 1,
+  "medicoId": 1,
+  "fechaHora": "2026-12-01T10:15:00",
+  "motivo": "Prueba de choque"
+}
+
+### Listar citas
+GET {{host}}/api/citas
+
+### Filtrar por médico y fecha
+GET {{host}}/api/citas?medicoId=1&fecha=2026-12-01
+
+### Cancelar cita 1
+PATCH {{host}}/api/citas/1/cancelar
+
+### Cancelar otra vez -> debe dar 400 (RN4)
+PATCH {{host}}/api/citas/1/cancelar
