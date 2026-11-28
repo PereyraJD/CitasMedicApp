@@ -1,0 +1,115 @@
+<div class="page-heading">
+  <div>
+    <h1>{{ patient() ? 'Pacientes' : 'Médicos' }}</h1>
+    <p>{{ patient() ? 'Gestiona el registro de pacientes.' : 'Administra el personal médico y sus especialidades.' }}</p>
+  </div>
+  <button pButton type="button" (click)="open()">
+    <i pButtonIcon class="pi pi-plus" aria-hidden="true"></i>
+    <span pButtonLabel>{{ patient() ? 'Nuevo paciente' : 'Nuevo médico' }}</span>
+  </button>
+</div>
+
+<section class="panel table-panel">
+  <div class="filters">
+    <label class="search">
+      <span>Buscar</span>
+      <span class="search-field">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input pInputText type="search" #search [value]="query()"
+               [placeholder]="patient() ? 'Nombre o cédula' : 'Nombre o especialidad'"
+               (input)="query.set(search.value); first.set(0)">
+      </span>
+    </label>
+    @if (!patient()) {
+      <div class="filter-field">
+        <label for="especialidad-filtro" id="especialidad-filtro-label">Especialidad</label>
+        <p-select inputId="especialidad-filtro" ariaLabelledBy="especialidad-filtro-label" [options]="specialties()" [ngModel]="specialty()"
+                  placeholder="Todas las especialidades" [showClear]="true"
+                  (ngModelChange)="specialty.set($event); first.set(0)" />
+      </div>
+    }
+  </div>
+  <app-feedback [loading]="list().loading" [error]="list().error" (retry)="revision.update(increment)">
+    <p-table [value]="filtered()" dataKey="id" [paginator]="filtered().length > 10"
+             [rows]="10" [first]="first()" (firstChange)="first.set($event)">
+      <ng-template #header>
+        <tr>
+          <th scope="col">Nombre completo</th>
+          <th scope="col">{{ patient() ? 'Cédula' : 'Especialidad' }}</th>
+          <th scope="col">Teléfono</th>
+          @if (patient()) { <th scope="col">Correo</th> }
+          <th scope="col">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-person>
+        <tr>
+          <td class="mobile-record-name">
+            <span class="person-name">
+              <span class="avatar" aria-hidden="true">{{ person.nombre.charAt(0) }}{{ person.apellido.charAt(0) }}</span>
+              <strong>{{ person.nombre }} {{ person.apellido }}</strong>
+            </span>
+          </td>
+          <td [attr.data-label]="patient() ? 'Cédula' : 'Especialidad'">{{ secondary(person) }}</td>
+          <td data-label="Teléfono">{{ person.telefono }}</td>
+          @if (patient()) { <td data-label="Correo">{{ person.email || '—' }}</td> }
+          <td class="mobile-record-actions">
+            <button pButton type="button" [text]="true" size="small" (click)="selected.set(person.id)"
+                    [attr.aria-label]="'Ver detalle de ' + person.nombre + ' ' + person.apellido">
+              <i pButtonIcon class="pi pi-eye" aria-hidden="true"></i><span pButtonLabel>Ver detalle</span>
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr><td [attr.colspan]="patient() ? 5 : 4" class="empty">
+          {{ query() || specialty() ? 'No hay registros que coincidan con los filtros.' : 'Aún no hay registros.' }}
+        </td></tr>
+      </ng-template>
+    </p-table>
+    <p class="table-count">{{ filtered().length }} {{ filtered().length === 1 ? 'registro' : 'registros' }}</p>
+  </app-feedback>
+</section>
+
+<p-dialog [header]="patient() ? 'Nuevo paciente' : 'Nuevo médico'" [visible]="show()"
+          (visibleChange)="show.set($event)" [modal]="true" [draggable]="false"
+          [closable]="!saveAction.pending()" [closeOnEscape]="!saveAction.pending()" transitionOptions="0ms" closeAriaLabel="Cerrar diálogo" styleClass="app-dialog">
+  @if (show()) {
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-grid">
+        <label>Nombre <input pInputText formControlName="nombre" maxlength="100" autocomplete="given-name" required></label>
+        <label>Apellido <input pInputText formControlName="apellido" maxlength="100" autocomplete="family-name" required></label>
+        <label>Teléfono <input pInputText type="tel" formControlName="telefono" placeholder="809-555-1234"
+                              maxlength="12" autocomplete="tel" required></label>
+        @if (patient()) {
+          <label>Cédula <input pInputText formControlName="cedula" placeholder="001-1234567-8" maxlength="13" required></label>
+          <label>Correo electrónico (opcional) <input pInputText type="email" formControlName="email" maxlength="100" autocomplete="email"></label>
+          <label>Fecha de nacimiento <input pInputText type="date" formControlName="fechaNacimiento" [max]="today()" required></label>
+        } @else {
+          <label>Especialidad <input pInputText formControlName="especialidad" maxlength="100" required></label>
+        }
+      </div>
+      @if (saveAction.error()) { <p class="error" role="alert">{{ saveAction.error() }}</p> }
+      <div class="actions">
+        <button pButton type="button" severity="secondary" [outlined]="true" [disabled]="saveAction.pending()" (click)="show.set(false)">Cancelar</button>
+        <p-button type="submit" label="Registrar" [loading]="saveAction.pending()" />
+      </div>
+    </form>
+  }
+</p-dialog>
+
+<p-dialog [header]="patient() ? 'Detalle de paciente' : 'Detalle de médico'" [visible]="selected() !== null"
+          (visibleChange)="!$event && selected.set(null)" [modal]="true" [draggable]="false" transitionOptions="0ms" closeAriaLabel="Cerrar diálogo" styleClass="app-dialog">
+  <app-feedback [loading]="detail().loading" [error]="detail().error" (retry)="detailRevision.update(increment)">
+    @if (detail().data; as person) {
+      <h3 class="detail-name">{{ person.nombre }} {{ person.apellido }}</h3>
+      <dl class="detail-grid">
+        <div><dt>{{ patient() ? 'Cédula' : 'Especialidad' }}</dt><dd>{{ secondary(person) }}</dd></div>
+        <div><dt>Teléfono</dt><dd>{{ person.telefono }}</dd></div>
+        @if ('cedula' in person) {
+          <div><dt>Correo electrónico</dt><dd>{{ person.email || '—' }}</dd></div>
+          <div><dt>Fecha de nacimiento</dt><dd>{{ person.fechaNacimiento | date:'dd/MM/yyyy' }}</dd></div>
+        }
+      </dl>
+    }
+  </app-feedback>
+</p-dialog>
